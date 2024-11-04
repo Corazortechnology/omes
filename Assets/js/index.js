@@ -197,7 +197,7 @@ function runUser() {
   }
   function fetchNextUser(remoteUser) {
     $.post(
-      "/get-next-user",
+      "https://omes.onrender.com/get-next-user",
       { omeID: username, remoteUser: remoteUser },
       function (data) {
         console.log("Next user is: ", data);
