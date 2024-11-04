@@ -70,7 +70,7 @@ function runUser() {
       audio: true,
     });
     document.getElementById("user-1").srcObject = localStream;
-    $.post("/get-remote-users", { omeID: username })
+    $.post("https://omes.onrender.com/get-remote-users", { omeID: username })
       .done(function (data) {
         console.log(data);
         if (data[0]) {
