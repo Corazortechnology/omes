@@ -3,10 +3,10 @@ const path = require("path");
 const bodyparser = require("body-parser");
 
 const app = express();
-const dotenv = require("dotenv");
+// const dotenv = require("dotenv");
 const connectDB = require("./Server/database/connection");
 
-dotenv.config({ path: "config.env" });
+// dotenv.config({ path: "config.env" });
 const PORT = process.env.PORT || 8080;
 
 connectDB();
