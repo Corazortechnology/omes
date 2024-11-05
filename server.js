@@ -1,14 +1,29 @@
 const express = require("express");
 const path = require("path");
 const bodyparser = require("body-parser");
-
+const { ExpressPeerServer } = require("peer");
 const app = express();
-// const dotenv = require("dotenv");
+const dotenv = require("dotenv");
 const connectDB = require("./Server/database/connection");
-
-// dotenv.config({ path: "config.env" });
-const PORT = process.env.PORT || 8080;
-
+const cors = require("cors");
+dotenv.config({ path: "config.env" });
+const PORT = 8080;
+const allowedOrigins = ["https://omes.onrender.com", "http://localhost:8080"];
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        const msg =
+          "The CORS policy for this site does not allow access from the specified origin.";
+        return callback(new Error(msg), false);
+      }
+    },
+    credentials: true, // Allow credentials (cookies, authorization headers, etc.) if needed
+  })
+);
 connectDB();
 app.use(bodyparser.urlencoded({ extended: true }));
 
@@ -29,7 +44,10 @@ var server = app.listen(PORT, () => {
 const io = require("socket.io")(server, {
   allowEIO3: true, //False by default
 });
-
+const peerServer = ExpressPeerServer(server, {
+  debug: true,
+});
+app.use("/peerjs", peerServer);
 var userConnection = [];
 
 io.on("connection", (socket) => {
