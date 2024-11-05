@@ -5,8 +5,8 @@ const { ExpressPeerServer } = require("peer");
 const app = express();
 const dotenv = require("dotenv");
 const connectDB = require("./Server/database/connection");
-const cors = require("cors");
-dotenv.config({ path: "config.env" });
+// const cors = require("cors");
+// dotenv.config({ path: "config.env" });
 const PORT = 8080;
 const allowedOrigins = ["https://omes.onrender.com", "http://localhost:8080"];
 app.use(
