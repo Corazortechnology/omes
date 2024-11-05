@@ -438,7 +438,6 @@ function initializePeer() {
   });
 }
 
-
 async function runUser() {
   localStream = await navigator.mediaDevices.getUserMedia({
     video: true,
@@ -446,8 +445,7 @@ async function runUser() {
   });
   document.getElementById("user-1").srcObject = localStream;
 
-
-  $.post("https://omes.onrender.com/get-remote-users", { omeID: username })
+  $.post("https://omes-2.onrender.com/get-remote-users", { omeID: username })
     .done(function (data) {
       if (data[0] && data[0]._id !== username) {
         remoteUser = data[0]._id;
@@ -512,7 +510,7 @@ async function closeConnection() {
 // Fetch the next user
 function fetchNextUser(remoteUser) {
   $.post(
-    "https://omes.onrender.com/get-next-user",
+    "https://omes-2.onrender.com/get-next-user",
     { omeID: username, remoteUser: remoteUser },
     function (data) {
       if (data[0] && data[0]._id !== username) {

@@ -8,7 +8,11 @@ const connectDB = require("./Server/database/connection");
 const cors = require("cors");
 dotenv.config({ path: "config.env" });
 const PORT = 8080;
-const allowedOrigins = ["https://omes.onrender.com", "http://localhost:8080"];
+const allowedOrigins = [
+  "https://omes.onrender.com",
+  "http://localhost:8080",
+  "https://omes-2.onrender.com",
+];
 app.use(
   cors({
     origin: function (origin, callback) {
