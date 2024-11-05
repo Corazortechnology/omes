@@ -413,8 +413,8 @@ if (omeID) {
 // Initialize Peer connection
 function initializePeer() {
   peer = new Peer(username, {
-    host: "localhost", // Replace with your server's host
-    port: 8080, // Replace with the port of your Peer.js server
+    host: "omes-2.onrender.com/", // Replace with your server's host
+    port: 443, // Replace with the port of your Peer.js server
     path: "/peerjs",
   });
 
