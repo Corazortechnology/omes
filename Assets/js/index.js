@@ -50,9 +50,9 @@ if (omeID) {
 // Initialize Peer connection
 function initializePeer() {
   peer = new Peer(username, {
-    host: "omes-2.onrender.com/", // Change to your server's host
-    port: 443, // Replace with the port used by your server
+    host: "omes-2.onrender.com", // Change to your server's host
     path: "/peerjs",
+    secure: true,
   });
 
   peer.on("open", (id) => {
