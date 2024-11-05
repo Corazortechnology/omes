@@ -1,12 +1,15 @@
 const express = require("express");
 const path = require("path");
 const bodyparser = require("body-parser");
+const { ExpressPeerServer } = require("peer");
+const http = require("http");
+const socketio = require("socket.io");
 
 const app = express();
-// const dotenv = require("dotenv");
+const dotenv = require("dotenv");
 const connectDB = require("./Server/database/connection");
 
-// dotenv.config({ path: "config.env" });
+dotenv.config({ path: "config.env" });
 const PORT = process.env.PORT || 8080;
 
 connectDB();
@@ -22,12 +25,21 @@ app.use("/js", express.static(path.resolve(__dirname, "Assets/js")));
 
 app.use("/", require("./Server/routes/router"));
 
-var server = app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Creating HTTP server
+const server = http.createServer(app);
 
-const io = require("socket.io")(server, {
-  allowEIO3: true, //False by default
+// PeerJS server setup
+const peerServer = ExpressPeerServer(server, {
+  debug: true,
+  path: '/peerjs'
+});
+app.use("/peerjs", peerServer);
+
+// Socket.io setup
+const io = socketio(server);
+
+server.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
 
 var userConnection = [];
@@ -98,5 +110,16 @@ io.on("connection", (socket) => {
       console.log("closedUser user is: ", closedUser.connectionId);
       socket.to(closedUser.connectionId).emit("closedRemoteUser", data);
     }
+  });
+});
+
+io.on('connection', socket => {
+  socket.on('join-room', (roomId, userId) => {
+      socket.join(roomId);
+      socket.to(roomId).broadcast.emit('user-connected', userId);
+
+      socket.on('disconnect', () => {
+          socket.to(roomId).broadcast.emit('user-disconnected', userId);
+      });
   });
 });

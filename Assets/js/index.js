@@ -49,6 +49,35 @@ if (omeID) {
     },
   });
 }
+
+const peer = new Peer(undefined, {
+  path: '/peerjs',
+  host: '/',
+  port: location.port || (location.protocol === 'https:' ? 443 : 80)
+});
+
+peer.on('open', id => {
+  socket.emit('join-room', ROOM_ID, id);
+});
+
+peer.on('call', call => {
+  call.answer(localStream);
+  call.on('stream', stream => {
+      // Handle the incoming stream, e.g., display it in a video element.
+      addVideoStream(stream);
+  });
+});
+
+socket.on('user-connected', peerId => {
+  // Delay the call to ensure all handlers are set up
+  setTimeout(() => {
+      const call = peer.call(peerId, localStream);
+      call.on('stream', stream => {
+          addVideoStream(stream);
+      });
+  }, 1000);
+});
+
 // ......Delete All Records..........
 
 document.getElementById("deleteButton").addEventListener("click", () => {
