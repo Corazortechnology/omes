@@ -3,16 +3,25 @@ const path = require("path");
 const bodyparser = require("body-parser");
 
 const app = express();
-// const dotenv = require("dotenv");
+const dotenv = require("dotenv");
 const connectDB = require("./Server/database/connection");
 
-// dotenv.config({ path: "config.env" });
+dotenv.config({ path: "config.env" });
 const PORT = process.env.PORT || 8080;
 
 connectDB();
 app.use(bodyparser.urlencoded({ extended: true }));
 
 app.use(bodyparser.json());
+
+app.get('/webrtc-config', (req, res) => {
+  res.json({
+    stunServer: process.env.TWILIO_STUN_SERVER,
+    turnServer: process.env.TWILIO_TURN_SERVER,
+    turnUsername: process.env.TWILIO_TURN_USERNAME,
+    turnCredential: process.env.TWILIO_TURN_CREDENTIAL
+  });
+});
 
 app.set("view engine", "ejs");
 
@@ -100,3 +109,4 @@ io.on("connection", (socket) => {
     }
   });
 });
+
