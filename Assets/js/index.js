@@ -87,29 +87,41 @@ document.getElementById("deleteButton").addEventListener("click", () => {
 // Function to run user
 function runUser() {
   let init = async () => {
-    localStream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
-    document.getElementById("user-1").srcObject = localStream;
-
-    // Fetch remote users and initiate connection
-    $.post("/get-remote-users", { omeID: username })
-      .done(function (data) {
-        console.log(data);
-        if (data[0]) {
-          if (data[0]._id == remoteUser || data[0]._id == username) {
-            // User already connected
-          } else {
-            remoteUser = data[0]._id;
-            createOffer(data[0]._id);
-          }
-        }
-      })
-      .fail(function (xhr, textStatus, errorThrown) {
-        console.log(xhr.responseText);
+    try {
+      // Attempt to get user media for audio and video
+      localStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
       });
+      document.getElementById("user-1").srcObject = localStream;
+    } catch (error) {
+      console.error("Error accessing media devices:", error);
+      alert(
+        "Could not access camera and microphone. Please check your permissions."
+      );
+      return; // Stop execution if we can't get the local stream
+    }
+
+    // Proceed only if localStream is successfully initialized
+    if (localStream) {
+      $.post("/get-remote-users", { omeID: username })
+        .done(function (data) {
+          console.log(data);
+          if (data[0]) {
+            if (data[0]._id == remoteUser || data[0]._id == username) {
+              // User already connected
+            } else {
+              remoteUser = data[0]._id;
+              createOffer(data[0]._id);
+            }
+          }
+        })
+        .fail(function (xhr, textStatus, errorThrown) {
+          console.log(xhr.responseText);
+        });
+    }
   };
+
   init();
 
   let socket = io.connect();
