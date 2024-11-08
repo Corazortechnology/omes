@@ -94,7 +94,7 @@ function runUser() {
     document.getElementById("user-1").srcObject = localStream;
 
     // Fetch remote users and initiate connection
-    $.post("https://omes.onrender.com/get-remote-users", { omeID: username })
+    $.post("/get-remote-users", { omeID: username })
       .done(function (data) {
         console.log(data);
         if (data[0]) {
@@ -226,7 +226,7 @@ function runUser() {
 
   function fetchNextUser(remoteUser) {
     $.post(
-      "https://omes.onrender.com/get-next-user",
+      "/get-next-user",
       { omeID: username, remoteUser: remoteUser },
       function (data) {
         console.log("Next user is: ", data);
