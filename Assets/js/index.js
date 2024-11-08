@@ -2,7 +2,7 @@ let localStream;
 var username;
 let remoteUser;
 let url = new URL(window.location.href);
-// // username = url.searchParams.get("username");
+// username = url.searchParams.get("username");
 // remoteUser = url.searchParams.get("remoteuser");
 let peerConnection;
 let remoteStream;
@@ -13,33 +13,10 @@ var msgSendBtn = document.querySelector(".msg-send-button");
 var chatTextArea = document.querySelector(".chat-text-area");
 var omeID = localStorage.getItem("omeID");
 
-async function fetchWebRTCConfig() {
-  try {
-    const response = await fetch('/webrtc-config');
-    const config = await response.json();
-    return {
-      iceServers: [
-        { urls: config.stunServer },
-        {
-          urls: config.turnServer,
-          username: config.turnUsername,
-          credential: config.turnCredential
-        }
-      ]
-    };
-  } catch (error) {
-    console.error('Failed to fetch ICE server configuration:', error);
-    return {
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" } // Fallback STUN server
-      ]
-    };
-  }
-}
-
+// Initialize user identification
 if (omeID) {
   $.ajax({
-    url: "/new-user-update/" + omeID + "",
+    url: "/new-user-update/" + omeID,
     type: "PUT",
     success: function (data) {
       const newOmeID = data.omeID;
@@ -74,8 +51,27 @@ if (omeID) {
     },
   });
 }
-// ......Delete All Records..........
 
+// Function to fetch WebRTC configuration including TURN credentials
+async function fetchWebRTCConfig() {
+  try {
+    const response = await fetch("/webrtc-config");
+    const config = await response.json();
+
+    console.log("ICE Servers:", config.iceServers);
+    console.log("Username:", config.username);
+    console.log("Password:", config.password);
+
+    return config.iceServers; // Return the ICE servers
+  } catch (error) {
+    console.error("Failed to fetch ICE server configuration:", error);
+    return [
+      { urls: "stun:stun.l.google.com:19302" }, // Fallback STUN server
+    ];
+  }
+}
+
+// Delete all records
 document.getElementById("deleteButton").addEventListener("click", () => {
   fetch("/deleteAllRecords", {
     method: "DELETE",
@@ -87,31 +83,35 @@ document.getElementById("deleteButton").addEventListener("click", () => {
     })
     .catch((error) => console.error("Error deleting records:", error));
 });
-// ......Delete All Records..........
+
+// Function to run user
 function runUser() {
-  async function init() {
+  let init = async () => {
     localStream = await navigator.mediaDevices.getUserMedia({
       video: true,
-      audio: true
+      audio: true,
     });
     document.getElementById("user-1").srcObject = localStream;
-  
-    const servers = await fetchWebRTCConfig(); // Get the ICE servers config
-    createPeerConnection(servers);
-  
-    $.post("/get-remote-users", { omeID: username })
+
+    // Fetch remote users and initiate connection
+    $.post("https://omes.onrender.com/get-remote-users", { omeID: username })
       .done(function (data) {
         console.log(data);
-        if (data[0] && data[0]._id !== username && data[0]._id !== remoteUser) {
-          remoteUser = data[0]._id;
-          createOffer(data[0]._id);
+        if (data[0]) {
+          if (data[0]._id == remoteUser || data[0]._id == username) {
+            // User already connected
+          } else {
+            remoteUser = data[0]._id;
+            createOffer(data[0]._id);
+          }
         }
       })
       .fail(function (xhr, textStatus, errorThrown) {
         console.log(xhr.responseText);
       });
-  }
+  };
   init();
+
   let socket = io.connect();
   socket.on("connect", () => {
     if (socket.connected) {
@@ -120,63 +120,50 @@ function runUser() {
       });
     }
   });
-  let servers = {
-    iceServers: [
-      {
-        urls: [
-          "stun:stun1.1.google.com:19302",
-          "stun:stun2.1.google.com:19302",
-        ],
-      },
-    ],
-  };
 
-  function createPeerConnection(servers) {
-    peerConnection = new RTCPeerConnection(servers);
-    remoteStream = new MediaStream();
-    document.getElementById("user-2").srcObject = remoteStream;
-    localStream.getTracks().forEach(track => {
-      peerConnection.addTrack(track, localStream);
-    });
-    peerConnection.ontrack = event => {
-      event.streams[0].getTracks().forEach(track => {
-        remoteStream.addTrack(track);
+  // Fetch ICE servers for peer connection
+  fetchWebRTCConfig().then((iceServers) => {
+    let createPeerConnection = async () => {
+      peerConnection = new RTCPeerConnection({ iceServers }); // Use fetched ICE servers
+      remoteStream = new MediaStream();
+      document.getElementById("user-2").srcObject = remoteStream;
+      localStream.getTracks().forEach((track) => {
+        peerConnection.addTrack(track, localStream);
       });
-    };
-    peerConnection.onicecandidate = event => {
-      if (event.candidate) {
-        socket.emit("candidateSentToUser", {
-          username: username,
-          remoteUser: remoteUser,
-          iceCandidateData: event.candidate
+      peerConnection.ontrack = async (event) => {
+        event.streams[0].getTracks().forEach((track) => {
+          remoteStream.addTrack(track);
         });
-      }
-    };
-    sendChannel = peerConnection.createDataChannel("sendDataChannel");
-    sendChannel.onopen = () => {
-      console.log("Data channel is now open and ready to use");
-    };
-    peerConnection.ondatachannel = event => {
-      receiveChannel = event.channel;
-      receiveChannel.onmessage = handleReceiveMessage;
-      receiveChannel.onopen = handleChannelStatusChange;
-      receiveChannel.onclose = handleChannelStatusChange;
-    };
-  }
+      };
+      remoteStream.oninactive = () => {
+        remoteStream.getTracks().forEach((track) => {
+          track.enabled = !track.enabled;
+        });
+        peerConnection.close();
+      };
+      peerConnection.onicecandidate = async (event) => {
+        if (event.candidate) {
+          socket.emit("candidateSentToUser", {
+            username: username,
+            remoteUser: remoteUser,
+            iceCandidateData: event.candidate,
+          });
+        }
+      };
+      sendChannel = peerConnection.createDataChannel("sendDataChannel");
+      sendChannel.onopen = () => {
+        console.log("Data channel is now open and ready to use");
+        onSendChannelStateChange();
+      };
 
-  function handleChannelStatusChange() {
-  if (receiveChannel) {
-    console.log("Data channel's status has changed to " + receiveChannel.readyState);
-  }
-  if (sendChannel) {
-    console.log("Data channel's status has changed to " + sendChannel.readyState);
-  }
-}
+      peerConnection.ondatachannel = receiveChannelCallback;
+    };
 
-  function handleReceiveMessage(event) {
-    chatTextArea.innerHTML += `<div><b>Stranger: </b>${event.data}</div>`;
-  }
+    // Start creating peer connection
+    createPeerConnection();
+  });
 
+  // Data sending logic
   function sendData() {
     const msgData = msgInput.value;
     chatTextArea.innerHTML +=
@@ -192,6 +179,7 @@ function runUser() {
       msgInput.value = "";
     }
   }
+
   function receiveChannelCallback(event) {
     console.log("Receive Channel Callback");
     receiveChannel = event.channel;
@@ -199,6 +187,7 @@ function runUser() {
     receiveChannel.onopen = onReceiveChannelStateChange;
     receiveChannel.onclose = onReceiveChannelStateChange;
   }
+
   function onReceiveChannelMessageCallback(event) {
     console.log("Received Message");
     chatTextArea.innerHTML +=
@@ -206,8 +195,9 @@ function runUser() {
       event.data +
       "</div>";
   }
+
   function onReceiveChannelStateChange() {
-    const readystate = receiveChannel.readystate;
+    const readystate = receiveChannel.readyState;
     console.log("Receive channel state is: " + readystate);
     if (readystate === "open") {
       console.log(
@@ -219,8 +209,9 @@ function runUser() {
       );
     }
   }
+
   function onSendChannelStateChange() {
-    const readystate = sendChannel.readystate;
+    const readystate = sendChannel.readyState;
     console.log("Send channel state is: " + readystate);
     if (readystate === "open") {
       console.log(
@@ -232,14 +223,16 @@ function runUser() {
       );
     }
   }
+
   function fetchNextUser(remoteUser) {
     $.post(
-      "/get-next-user",
+      "https://omes.onrender.com/get-next-user",
       { omeID: username, remoteUser: remoteUser },
       function (data) {
         console.log("Next user is: ", data);
         if (data[0]) {
           if (data[0]._id == remoteUser || data[0]._id == username) {
+            // User already connected
           } else {
             remoteUser = data[0]._id;
             createOffer(data[0]._id);
@@ -248,8 +241,8 @@ function runUser() {
       }
     );
   }
+
   let createOffer = async (remoteU) => {
-    createPeerConnection();
     let offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
     socket.emit("offerSentToRemote", {
@@ -261,7 +254,6 @@ function runUser() {
 
   let createAnswer = async (data) => {
     remoteUser = data.username;
-    createPeerConnection();
     await peerConnection.setRemoteDescription(data.offer);
     let answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
@@ -272,28 +264,32 @@ function runUser() {
     });
     document.querySelector(".next-chat").style.pointerEvents = "auto";
     $.ajax({
-      url: "/update-on-engagement/" + username + "",
+      url: "/update-on-engagement/" + username,
       type: "PUT",
       success: function (response) {},
     });
   };
+
   socket.on("ReceiveOffer", function (data) {
     createAnswer(data);
   });
+
   let addAnswer = async (data) => {
     if (!peerConnection.currentRemoteDescription) {
-      peerConnection.setRemoteDescription(data.answer);
+      await peerConnection.setRemoteDescription(data.answer);
     }
     document.querySelector(".next-chat").style.pointerEvents = "auto";
     $.ajax({
-      url: "/update-on-engagement/" + username + "",
+      url: "/update-on-engagement/" + username,
       type: "PUT",
       success: function (response) {},
     });
   };
+
   socket.on("ReceiveAnswer", function (data) {
     addAnswer(data);
   });
+
   socket.on("closedRemoteUser", function (data) {
     const remotStream = peerConnection.getRemoteStreams()[0];
     remotStream.getTracks().forEach((track) => track.stop());
@@ -306,7 +302,7 @@ function runUser() {
     }
     console.log("Closed Remote user");
     $.ajax({
-      url: "/update-on-next/" + username + "",
+      url: "/update-on-next/" + username,
       type: "PUT",
       success: function (response) {
         fetchNextUser(remoteUser);
@@ -315,7 +311,7 @@ function runUser() {
   });
 
   socket.on("candidateReceiver", function (data) {
-    peerConnection.addIceCandidate(data.iceCandidateData);
+    peerConnection.addIceCandidate(new RTCIceCandidate(data.iceCandidateData));
   });
 
   msgSendBtn.addEventListener("click", function (event) {
@@ -327,16 +323,17 @@ function runUser() {
       username: username,
       remoteUser: remoteUser,
     });
+    // Handle browser-specific user leaving updates
     if (navigator.userAgent.indexOf("Chrome") != -1) {
       $.ajax({
-        url: "/leaving-user-update/" + username + "",
+        url: "/leaving-user-update/" + username,
         type: "PUT",
         success: function (response) {
           console.log(response);
         },
       });
       $.ajax({
-        url: "/update-on-otheruser-closing/" + remoteUser + "",
+        url: "/update-on-otheruser-closing/" + remoteUser,
         type: "PUT",
         success: function (response) {
           console.log(response);
@@ -344,7 +341,7 @@ function runUser() {
       });
     } else if (navigator.userAgent.indexOf("Firefox") != -1) {
       $.ajax({
-        url: "/leaving-user-update/" + username + "",
+        url: "/leaving-user-update/" + username,
         type: "PUT",
         async: false,
         success: function (response) {
@@ -353,7 +350,7 @@ function runUser() {
       });
 
       $.ajax({
-        url: "/update-on-otheruser-closing/" + remoteUser + "",
+        url: "/update-on-otheruser-closing/" + remoteUser,
         type: "PUT",
         async: false,
         success: function (response) {
@@ -364,6 +361,7 @@ function runUser() {
       console.log("This is not Chrome or Firefox");
     }
   });
+
   async function closeConnection() {
     document.querySelector(".chat-text-area").innerHTML = "";
     const remotStream = peerConnection.getRemoteStreams()[0];
@@ -381,14 +379,14 @@ function runUser() {
       remoteUser: remoteUser,
     });
     $.ajax({
-      url: "/update-on-next/" + username + "",
+      url: "/update-on-next/" + username,
       type: "PUT",
       success: function (response) {
         fetchNextUser(remoteUser);
       },
     });
   }
-  // document.querySelector(".next-chat").onClick = function () {
+
   $(document).on("click", ".next-chat", function () {
     document.querySelector(".chat-text-area").innerHTML = "";
     console.log("From Next Chat button");

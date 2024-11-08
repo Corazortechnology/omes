@@ -3,24 +3,34 @@ const path = require("path");
 const bodyparser = require("body-parser");
 
 const app = express();
+const twilio = require('twilio');
 const dotenv = require("dotenv");
 const connectDB = require("./Server/database/connection");
 
 dotenv.config({ path: "config.env" });
 const PORT = process.env.PORT || 8080;
 
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = twilio(accountSid, authToken);
+
 connectDB();
 app.use(bodyparser.urlencoded({ extended: true }));
 
 app.use(bodyparser.json());
 
-app.get('/webrtc-config', (req, res) => {
-  res.json({
-    stunServer: process.env.TWILIO_STUN_SERVER,
-    turnServer: process.env.TWILIO_TURN_SERVER,
-    turnUsername: process.env.TWILIO_TURN_USERNAME,
-    turnCredential: process.env.TWILIO_TURN_CREDENTIAL
-  });
+app.get('/webrtc-config', async (req, res) => {
+  try {
+      const token = await client.tokens.create();
+      res.json({
+          iceServers: token.iceServers,
+          username: token.username,
+          password: token.password
+      });
+  } catch (error) {
+      console.error('Error fetching TURN credentials:', error);
+      res.status(500).send('Internal Server Error');
+  }
 });
 
 app.set("view engine", "ejs");
