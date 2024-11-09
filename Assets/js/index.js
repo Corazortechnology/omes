@@ -53,20 +53,20 @@ if (omeID) {
 }
 
 // Function to fetch WebRTC configuration including TURN credentials
-async function fetchWebRTCConfig() {
+async function fetchWebRTCConfig(region = 'ap1') {
   try {
-    const response = await fetch("/webrtc-config");
+    const response = await fetch(`/webrtc-config?region=${region}`);
     const config = await response.json();
 
     console.log("ICE Servers:", config.iceServers);
     console.log("Username:", config.username);
     console.log("Password:", config.password);
 
-    return config.iceServers; // Return the ICE servers
+    return config.iceServers;  // Return the ICE servers for use in peer connection
   } catch (error) {
     console.error("Failed to fetch ICE server configuration:", error);
     return [
-      { urls: "stun:stun.l.google.com:19302" }, // Fallback STUN server
+      { urls: "stun:stun.l.google.com:19302" },  // Fallback STUN server
     ];
   }
 }
@@ -122,7 +122,7 @@ function runUser() {
   });
 
   // Fetch ICE servers for peer connection
-  fetchWebRTCConfig().then((iceServers) => {
+  fetchWebRTCConfig('ap1').then((iceServers) => {
     let createPeerConnection = async () => {
       peerConnection = new RTCPeerConnection({ iceServers }); // Use fetched ICE servers
       remoteStream = new MediaStream();

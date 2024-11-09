@@ -21,9 +21,12 @@ app.use(bodyparser.json());
 
 app.get('/webrtc-config', async (req, res) => {
   try {
-      const token = await client.tokens.create();
+      const region = req.query.region || 'ap1'; 
+      // Generate a token with the specified region
+      const token = await client.tokens.create({ region });
+      
       res.json({
-          iceServers: token.iceServers,
+          iceServers: token.iceServers,  // Return the ICE servers with the region
           username: token.username,
           password: token.password
       });
