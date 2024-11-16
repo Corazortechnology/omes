@@ -14,11 +14,15 @@ connectDB();
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json());
 
-app.set("view engine", "ejs");
+// app.set("view engine", "ejs");
+app.use(express.static(path.join(__dirname, "client/build")));
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+});
 
-app.use("/css", express.static(path.resolve(__dirname, "Assets/css")));
-app.use("/img", express.static(path.resolve(__dirname, "Assets/img")));
-app.use("/js", express.static(path.resolve(__dirname, "Assets/js")));
+// app.use("/css", express.static(path.resolve(__dirname, "Assets/css")));
+// app.use("/img", express.static(path.resolve(__dirname, "Assets/img")));
+// app.use("/js", express.static(path.resolve(__dirname, "Assets/js")));
 
 app.use("/", require("./Server/routes/router"));
 

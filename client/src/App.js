@@ -6,7 +6,7 @@ import Home from "./Home";
 import TextChat from "./TextChat";
 import VideoChat from "./VideoChat";
 // import logo from "./logo.svg";
-// import "./App.css";
+import "./App.css";
 
 function App() {
   return (
