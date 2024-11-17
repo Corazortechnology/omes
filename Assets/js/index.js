@@ -70,7 +70,7 @@ function runUser() {
       audio: true,
     });
     document.getElementById("user-1").srcObject = localStream;
-    $.post("https://omes-ahgpcqfjdmb8h4bh.canadacentral-01.azurewebsites.net/get-remote-users", { omeID: username })
+    $.post("get-remote-users", { omeID: username })
       .done(function (data) {
         console.log(data);
         if (data[0]) {
@@ -95,14 +95,40 @@ function runUser() {
     }
   });
   let servers = {
+    // iceServers: [
+    //   {
+    //     urls: [
+    //       "stun:stun1.1.google.com:19302",
+    //       "stun:stun2.1.google.com:19302",
+    //     ],
+    //   },
+    // ],
+
     iceServers: [
       {
-        urls: [
-          "stun:stun1.1.google.com:19302",
-          "stun:stun2.1.google.com:19302",
-        ],
+        urls: "stun:stun.relay.metered.ca:80",
       },
-    ],
+      {
+        urls: "turn:global.relay.metered.ca:80",
+        username: "d0f91f860e31a9ad9af9dc91",
+        credential: "enB0j3i5Mn61ugaJ",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "d0f91f860e31a9ad9af9dc91",
+        credential: "enB0j3i5Mn61ugaJ",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "d0f91f860e31a9ad9af9dc91",
+        credential: "enB0j3i5Mn61ugaJ",
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "d0f91f860e31a9ad9af9dc91",
+        credential: "enB0j3i5Mn61ugaJ",
+      },
+  ],
   };
   let createPeerConnection = async () => {
     peerConnection = new RTCPeerConnection(servers);
@@ -197,7 +223,7 @@ function runUser() {
   }
   function fetchNextUser(remoteUser) {
     $.post(
-      "https://omes-ahgpcqfjdmb8h4bh.canadacentral-01.azurewebsites.net/get-next-user",
+      "get-next-user",
       { omeID: username, remoteUser: remoteUser },
       function (data) {
         console.log("Next user is: ", data);

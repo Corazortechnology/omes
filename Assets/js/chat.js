@@ -71,7 +71,7 @@ function runUser() {
     });
     localStream.getTracks().forEach((track) => track.stop());
     // document.getElementById("user-1").srcObject = localStream;
-    $.post("https://omes-ahgpcqfjdmb8h4bh.canadacentral-01.azurewebsites.net/get-remote-users", { omeID: username })
+    $.post("get-remote-users", { omeID: username })
       .done(function (data) {
         console.log(data);
         if (data[0]) {
@@ -198,7 +198,7 @@ function runUser() {
   }
   function fetchNextUser(remoteUser) {
     $.post(
-      "https://omes-ahgpcqfjdmb8h4bh.canadacentral-01.azurewebsites.net/get-next-user",
+      "get-next-user",
       { omeID: username, remoteUser: remoteUser },
       function (data) {
         console.log("Next user is: ", data);

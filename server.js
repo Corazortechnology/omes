@@ -110,7 +110,10 @@ const dotenv = require("dotenv");
 const connectDB = require("./Server/database/connection");
 
 dotenv.config({ path: "config.env" });
+
+const hostname = '0.0.0.0';
 const PORT = process.env.PORT || 8080;
+
 
 connectDB();
 app.use(bodyparser.urlencoded({ extended: true }));
@@ -119,7 +122,7 @@ app.use(bodyparser.json());
 // Enable CORS for the specified URL
 app.use(
   cors({
-    origin: "https://omes-ahgpcqfjdmb8h4bh.canadacentral-01.azurewebsites.net",
+    origin: "*",
     methods: ["GET", "POST"], // Specify allowed methods if needed
     credentials: true, // Allow cookies or other credentials
   })
@@ -133,13 +136,13 @@ app.use("/js", express.static(path.resolve(__dirname, "Assets/js")));
 
 app.use("/", require("./Server/routes/router"));
 
-var server = app.listen(PORT, () => {
+var server = app.listen(PORT, hostname, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
 
 const io = require("socket.io")(server, {
   cors: {
-    origin: "https://omes-ahgpcqfjdmb8h4bh.canadacentral-01.azurewebsites.net",
+    origin: "*",
     methods: ["GET", "POST"], // Specify allowed methods for WebSocket
     credentials: true,
   },
