@@ -15,10 +15,15 @@ app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json());
 
 // app.set("view engine", "ejs");
-app.use(express.static(path.join(__dirname, "client/build")));
-app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
-});
+// app.use(express.static(path.join(__dirname, "client/build")));
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "client/build")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+  });
+} else {
+  app.use(cors()); // Allow API calls from React during development
+}
 
 // app.use("/css", express.static(path.resolve(__dirname, "Assets/css")));
 // app.use("/img", express.static(path.resolve(__dirname, "Assets/img")));
@@ -34,6 +39,14 @@ const allowedOrigins = [
   "http://localhost:3000", // React frontend in local development
   "https://omes-ahgpcqfjdmb8h4bh.canadacentral-01.azurewebsites.net", // Production URL
 ];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true, // Allow cookies and credentials
+  })
+);
 
 const io = require("socket.io")(server, {
   cors: {

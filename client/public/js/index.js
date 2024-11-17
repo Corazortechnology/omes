@@ -71,7 +71,14 @@ function runUser() {
       video: true,
       audio: true,
     });
-    document.getElementById("user-1").srcObject = localStream;
+
+    const videoElement = document.getElementById("user-1");
+    if (videoElement) {
+      videoElement.srcObject = localStream;
+    } else {
+      console.error("Video element with id 'user-1' not found.");
+    }
+
     $.post("/get-remote-users", { omeID: username })
       .done(function (data) {
         console.log(data);
