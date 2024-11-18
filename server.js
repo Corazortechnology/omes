@@ -62,18 +62,44 @@ var userConnection = [];
 io.on("connection", (socket) => {
   console.log("Socket id is: ", socket.id);
 
+  // socket.on("userconnect", (data) => {
+  //   console.log("Logged in username", data.displayName);
+  //   userConnection.push({
+  //     connectionId: socket.id,
+  //     user_id: data.displayName,
+  //   });
+
+  //   var userCount = userConnection.length;
+  //   console.log("UserCount", userCount);
+  //   userConnection.map(function (user) {
+  //     console.log("Username is: ", user.user_id);
+  //   });
+  // });
   socket.on("userconnect", (data) => {
     console.log("Logged in username", data.displayName);
+
+    // Find if the user is already connected
+    const existingUser = userConnection.find(
+      (user) => user.user_id === data.displayName
+    );
+
+    if (existingUser) {
+      console.log(`User ${data.displayName} is already connected.`);
+      // Disconnect the old socket
+      socket.to(existingUser.connectionId).emit("forceDisconnect");
+      userConnection = userConnection.filter(
+        (user) => user.user_id !== data.displayName
+      );
+    }
+
+    // Add the new connection
     userConnection.push({
       connectionId: socket.id,
       user_id: data.displayName,
     });
 
-    var userCount = userConnection.length;
-    console.log("UserCount", userCount);
-    userConnection.map(function (user) {
-      console.log("Username is: ", user.user_id);
-    });
+    console.log("UserCount", userConnection.length);
+    userConnection.map((user) => console.log("Username is: ", user.user_id));
   });
 
   socket.on("offerSentToRemote", (data) => {
