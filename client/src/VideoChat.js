@@ -639,12 +639,37 @@ const VideoChat = () => {
         }
       });
       let servers = {
+        // iceServers: [
+        //   {
+        //     urls: [
+        //       "stun:stun1.1.google.com:19302",
+        //       "stun:stun2.1.google.com:19302",
+        //     ],
+        //   },
+        // ],
         iceServers: [
           {
-            urls: [
-              "stun:stun1.1.google.com:19302",
-              "stun:stun2.1.google.com:19302",
-            ],
+            urls: "stun:stun.relay.metered.ca:80",
+          },
+          {
+            urls: "turn:global.relay.metered.ca:80",
+            username: "d0f91f860e31a9ad9af9dc91",
+            credential: "enB0j3i5Mn61ugaJ",
+          },
+          {
+            urls: "turn:global.relay.metered.ca:80?transport=tcp",
+            username: "d0f91f860e31a9ad9af9dc91",
+            credential: "enB0j3i5Mn61ugaJ",
+          },
+          {
+            urls: "turn:global.relay.metered.ca:443",
+            username: "d0f91f860e31a9ad9af9dc91",
+            credential: "enB0j3i5Mn61ugaJ",
+          },
+          {
+            urls: "turns:global.relay.metered.ca:443?transport=tcp",
+            username: "d0f91f860e31a9ad9af9dc91",
+            credential: "enB0j3i5Mn61ugaJ",
           },
         ],
       };
