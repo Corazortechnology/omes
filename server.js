@@ -37,6 +37,7 @@ var server = app.listen(PORT, () => {
 
 const allowedOrigins = [
   "http://localhost:3000", // React frontend in local development
+  "http://localhost:5173",
   "https://omes-ahgpcqfjdmb8h4bh.canadacentral-01.azurewebsites.net",
   "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/",
 ];

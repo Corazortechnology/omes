@@ -68,7 +68,6 @@ const VideoChat = () => {
       username = omeID;
       updateUserID(username).then(() => runUser());
     } else {
-      // If omeID does not exist, create a new one
       createNewUser().then((newOmeID) => {
         console.log("Generated new omeID: ", newOmeID);
         localStorage.setItem("omeID", newOmeID);
