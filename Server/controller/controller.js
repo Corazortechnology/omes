@@ -47,7 +47,7 @@ exports.updateOnOtherUserClosing = (req, res) => {
     .then((data) => {
       if (!data) {
         res.status(404).send({
-          message: `Cannot update user with ${userid} Maybe user not found!`,
+          message: ` Cannot update user with ${userid} Maybe user not found!`,
         });
       } else {
         res.send("1 document updated");
@@ -60,82 +60,111 @@ exports.updateOnOtherUserClosing = (req, res) => {
 
 // exports.newUserUpdate = (req, res) => {
 //   const userid = req.params.id;
-//   console.log("Revisited userid is: ", userid);
 
-//   UserDB.updateOne({ _id: userid }, { $set: { active: "yes" } })
-//     .then((data) => {
-//       if (!data) {
-//         res.status(404).send({
-//           message: `Cannot update user with ${userid} Maybe user not found!`,
-//         });
+//   // Step 2: Check if the omeID exists in the MongoDB Atlas database
+//   UserDB.findOne({ _id: userid })
+//     .then((user) => {
+//       if (user) {
+//         // omeID exists in the database, you can proceed with your logic here
+//         UserDB.updateOne({ _id: userid }, { $set: { active: "yes" } })
+//           .then((data) => {
+//             if (!data) {
+//               res.status(404).send({
+//                 message: Cannot update user with ${userid} Maybe user not found!,
+//               });
+//             } else {
+//               res.send("1 document updated");
+//             }
+//           })
+//           .catch((err) => {
+//             res.status(500).send({ message: "Error update user information" });
+//           });
+//         console.log("omeID exists in the database.");
+//         // Do any further actions here...
 //       } else {
-//         res.send("1 document updated");
+//         // omeID does not exist in the database
+//         console.log("omeID does not exist in the database.");
+
+//         // Step 3: Remove the omeID from localStorage
+//         // localStorage.removeItem("omeID");
+
+//         // Step 4: Create a new user in MongoDB and obtain the new user's ID
+
+//         const newUser = new UserDB({
+//           active: "yes",
+//           status: "0",
+//         });
+//         newUser
+//           .save(newUser)
+//           .then((data) => {
+//             // Obtain the new user's ID from the saved data
+//             const newUserID = data._id;
+
+//             // Step 5: Use the obtained user ID (newUserID) as the new omeID
+//             var newOmeID = newUserID;
+
+//             // Step 6: Store the new omeID in both MongoDB and the browser's localStorage
+//             // Store the new omeID in localStorage
+//             // localStorage.setItem("omeID", newOmeID);
+//             res.send({ omeID: newOmeID });
+//           })
+//           .catch((err) => {
+//             console.error("Error saving new user to the database:", err);
+//             // Handle any errors that occur during saving the new user
+//           });
 //       }
 //     })
 //     .catch((err) => {
-//       res.status(500).send({ message: "Error update user information" });
+//       console.error("Error querying the database:", err);
+//       // Handle any errors that occur during database query
 //     });
 // };
-exports.newUserUpdate = (req, res) => {
+
+exports.newUserUpdate = async (req, res) => {
   const userid = req.params.id;
 
-  // Step 2: Check if the omeID exists in the MongoDB Atlas database
-  UserDB.findOne({ _id: userid })
-    .then((user) => {
-      if (user) {
-        // omeID exists in the database, you can proceed with your logic here
-        UserDB.updateOne({ _id: userid }, { $set: { active: "yes" } })
-          .then((data) => {
-            if (!data) {
-              res.status(404).send({
-                message: `Cannot update user with ${userid} Maybe user not found!`,
-              });
-            } else {
-              res.send("1 document updated");
-            }
-          })
-          .catch((err) => {
-            res.status(500).send({ message: "Error update user information" });
-          });
-        console.log("omeID exists in the database.");
-        // Do any further actions here...
+  // Step 1: Check if the omeID exists in the MongoDB database
+  try {
+    const user = await UserDB.findOne({ _id: userid });
+
+    if (user) {
+      // User already exists, update it if necessary
+      console.log("omeID exists in the database:", userid);
+
+      // Update user to ensure active status
+      const updateResult = await UserDB.updateOne(
+        { _id: userid },
+        { $set: { active: "yes" } }
+      );
+
+      if (updateResult.nModified > 0) {
+        console.log("User updated successfully:", userid);
       } else {
-        // omeID does not exist in the database
-        console.log("omeID does not exist in the database.");
-
-        // Step 3: Remove the omeID from localStorage
-        // localStorage.removeItem("omeID");
-
-        // Step 4: Create a new user in MongoDB and obtain the new user's ID
-
-        const newUser = new UserDB({
-          active: "yes",
-          status: "0",
-        });
-        newUser
-          .save(newUser)
-          .then((data) => {
-            // Obtain the new user's ID from the saved data
-            const newUserID = data._id;
-
-            // Step 5: Use the obtained user ID (newUserID) as the new omeID
-            var newOmeID = newUserID;
-
-            // Step 6: Store the new omeID in both MongoDB and the browser's localStorage
-            // Store the new omeID in localStorage
-            // localStorage.setItem("omeID", newOmeID);
-            res.send({ omeID: newOmeID });
-          })
-          .catch((err) => {
-            console.error("Error saving new user to the database:", err);
-            // Handle any errors that occur during saving the new user
-          });
+        console.log("No changes were necessary for user:", userid);
       }
-    })
-    .catch((err) => {
-      console.error("Error querying the database:", err);
-      // Handle any errors that occur during database query
+
+      res.send("Existing user updated successfully");
+    } else {
+      // User does not exist, create a new record
+      console.log("omeID does not exist, creating a new user:", userid);
+
+      const newUser = new UserDB({
+        _id: userid, // Explicitly use the provided ID if required
+        active: "yes",
+        status: "0",
+      });
+
+      const savedUser = await newUser.save();
+      console.log("New user created with ID:", savedUser._id);
+
+      res.send({ omeID: savedUser._id });
+    }
+  } catch (error) {
+    console.error("Error querying or updating the database:", error);
+    res.status(500).send({
+      message: "Error occurred while updating or creating a user.",
     });
+  }
 };
 
 exports.updateOnEngagement = (req, res) => {
