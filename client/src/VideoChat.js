@@ -27,7 +27,7 @@ const VideoChat = () => {
     const updateUserID = (omeID) => {
       return new Promise((resolve, reject) => {
         $.ajax({
-          url: `http://localhost:8000/new-user-update/${omeID}`,
+          url: `https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/new-user-update/${omeID}`,
           type: "PUT",
           success: function (data) {
             if (data.omeID) {
@@ -50,7 +50,7 @@ const VideoChat = () => {
       return new Promise((resolve, reject) => {
         $.ajax({
           type: "POST",
-          url: "http://localhost:8000/api/users",
+          url: "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/api/users",
           data: { demoData: true },
           success: function (response) {
             console.log("New user created: ", response);
@@ -89,7 +89,10 @@ const VideoChat = () => {
         console.error("Video element with id 'user-1' not found.");
       }
 
-      $.post("http://localhost:8000/get-remote-users", { omeID: username })
+      $.post(
+        "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/get-remote-users",
+        { omeID: username }
+      )
         .done(function (data) {
           console.log("Remote users fetched: ", data);
           if (data[0] && data[0]._id !== username) {
@@ -105,7 +108,9 @@ const VideoChat = () => {
           console.error("Error fetching remote users: ", xhr.responseText);
         });
 
-      let socket = io("http://localhost:8000");
+      let socket = io(
+        "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/"
+      );
       socket.on("connect", () => {
         if (socket.connected) {
           socket.emit("userconnect", {
@@ -279,7 +284,7 @@ const VideoChat = () => {
       }
       function fetchNextUser(remoteUser) {
         $.post(
-          "http://localhost:8000/get-next-user",
+          "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/get-next-user",
           { omeID: username, remoteUser: remoteUser },
           function (data) {
             console.log("Next user is: ", data);
@@ -317,7 +322,10 @@ const VideoChat = () => {
         });
         document.querySelector(".next-chat").style.pointerEvents = "auto";
         $.ajax({
-          url: "http://localhost:8000/update-on-engagement/" + username + "",
+          url:
+            "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/update-on-engagement/" +
+            username +
+            "",
           type: "PUT",
           success: function (response) {},
         });
@@ -331,7 +339,10 @@ const VideoChat = () => {
         }
         document.querySelector(".next-chat").style.pointerEvents = "auto";
         $.ajax({
-          url: "http://localhost:8000/update-on-engagement/" + username + "",
+          url:
+            "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/update-on-engagement/" +
+            username +
+            "",
           type: "PUT",
           success: function (response) {},
         });
@@ -351,7 +362,10 @@ const VideoChat = () => {
         }
         console.log("Closed Remote user");
         $.ajax({
-          url: "http://localhost:8000/update-on-next/" + username + "",
+          url:
+            "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/update-on-next/" +
+            username +
+            "",
           type: "PUT",
           success: function (response) {
             fetchNextUser(remoteUser);
@@ -374,7 +388,10 @@ const VideoChat = () => {
         });
         if (navigator.userAgent.indexOf("Chrome") != -1) {
           $.ajax({
-            url: "http://localhost:8000/leaving-user-update/" + username + "",
+            url:
+              "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/leaving-user-update/" +
+              username +
+              "",
             type: "PUT",
             success: function (response) {
               console.log(response);
@@ -382,7 +399,7 @@ const VideoChat = () => {
           });
           $.ajax({
             url:
-              "http://localhost:8000/update-on-otheruser-closing/" +
+              "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/update-on-otheruser-closing/" +
               remoteUser +
               "",
             type: "PUT",
@@ -392,7 +409,10 @@ const VideoChat = () => {
           });
         } else if (navigator.userAgent.indexOf("Firefox") != -1) {
           $.ajax({
-            url: "http://localhost:8000/leaving-user-update/" + username + "",
+            url:
+              "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/leaving-user-update/" +
+              username +
+              "",
             type: "PUT",
             async: false,
             success: function (response) {
@@ -402,7 +422,7 @@ const VideoChat = () => {
 
           $.ajax({
             url:
-              "http://localhost:8000/update-on-otheruser-closing/" +
+              "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/update-on-otheruser-closing/" +
               remoteUser +
               "",
             type: "PUT",
@@ -432,7 +452,10 @@ const VideoChat = () => {
           remoteUser: remoteUser,
         });
         $.ajax({
-          url: "http://localhost:8000/update-on-next/" + username + "",
+          url:
+            "https://omes-new-h5f5ewhegnbrb9hg.canadacentral-01.azurewebsites.net/update-on-next/" +
+            username +
+            "",
           type: "PUT",
           success: function (response) {
             fetchNextUser(remoteUser);
